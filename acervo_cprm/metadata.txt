@@ -1,0 +1,22 @@
+[general]
+name=Acervo SIG - CPRM
+qgisMinimumVersion=4.0
+description=Catalogo do acervo GEOSGB do Servico Geologico do Brasil (SGB/CPRM) diretamente no QGIS: pesquise, baixe e adicione dados ao projeto.
+about=Acesso a 4.719 camadas e 643 GB de dados, com busca por folha, projeto ou palavra-chave, downloads em segundo plano e selecao por pacote.
+    Suporta diversos formatos, incluindo SHP, KML, KMZ, GeoPackage, GeoJSON, GeoTIFF, LAS/LAZ, XLSX, CSV e a carta geologica em PDF.
+    Tambem permite converter XYZ do Geosoft em pontos e espacializar planilhas de geoquimica. O catalogo e embutido e atualizavel pelo repositorio, sem dependencias externas.
+version=1.0.0
+author=Blenda Bastos
+email=blenda.bastos@hotmail.com
+
+repository=https://github.com/blendabastos/qgis_banco_cprm
+tracker=https://github.com/blendabastos/qgis_banco_cprm/issues
+homepage=https://github.com/blendabastos/qgis_banco_cprm
+
+tags=geology,geologia,brazil,brasil,cprm,sgb,geosgb,rigeo,download,catalog,vector,raster,shapefile,kml,kmz,geopackage,geojson,dxf,geotiff,tiff,jp2,lidar,las,laz,pointcloud,geoparquet,parquet,xlsx,csv,geophysics,geofisica,aerogeofisica,aeromagnetic,magnetometry,gammaray,geosoft,xyz,geochemistry,geoquimica,pdf,mapa,carta
+category=Web
+icon=icone.svg
+experimental=False
+deprecated=False
+license=MIT
+hasProcessingProvider=no

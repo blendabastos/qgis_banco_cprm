@@ -1,0 +1,34 @@
+{
+ "gerado_em": "2026-09-14T06:21:32",
+ "origem": "C:\\Users\\blend\\Documents\\Arquivos Temporarios\\Banco CPRM\\catalogo.csv",
+ "total": 4719,
+ "colunas": [
+  "id",
+  "titulo",
+  "nivel_1",
+  "nivel_2",
+  "nivel_3",
+  "nivel_4",
+  "tipo",
+  "nome_arquivo",
+  "formato",
+  "tamanho_bytes",
+  "link_download",
+  "origem"
+ ],
+ "bytes_brutos": 1512357,
+ "bytes_comprimidos": 177984,
+ "sha256": "9720dccd0442b6740e9e9173404590a8b8ced75e7bdeb1eff2cae4e432a6e74f",
+ "tamanho_acervo_bytes": 690331629675,
+ "por_tipo": {
+  "Geofísica-Geotiff": 243,
+  "Geofísica-XYZ": 141,
+  "Geoquímica-CSV": 1,
+  "Geoquímica-XLSX": 336,
+  "KML": 301,
+  "Mapa": 2062,
+  "Nuvem de pontos (LiDAR)": 56,
+  "Ortofoto/raster": 56,
+  "SIG (Vetores)": 1523
+ }
+}

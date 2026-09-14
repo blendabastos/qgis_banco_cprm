@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Camadas empilhadas, como num SIG, com a seta de download -->
+  <g fill="none" stroke="#2d5b3e" stroke-width="2.4" stroke-linejoin="round">
+    <path d="M24 5 42 14 24 23 6 14z" fill="#7cb894"/>
+    <path d="M6 22l18 9 18-9" stroke="#3d7a54"/>
+    <path d="M6 30l18 9 18-9" stroke="#5a9b72"/>
+  </g>
+  <g transform="translate(32 30)">
+    <circle cx="8" cy="8" r="9" fill="#c8531f"/>
+    <path d="M8 3.4v7.2M4.6 7.6L8 11l3.4-3.4M4 13h8" fill="none"
+          stroke="#fff" stroke-width="1.9" stroke-linecap="round"
+          stroke-linejoin="round"/>
+  </g>
+</svg>
