@@ -8,7 +8,7 @@ o plugin precisa e grava comprimida em acervo_cprm/dados/catalogo_sig.csv.gz.
     python gerar_catalogo.py --origem "..\\Banco CPRM\\catalogo.csv"
 
 Por que so uma fatia: o catalogo completo tem 5.258 linhas e 35 colunas (5,3 MB).
-O plugin usa 1.824 linhas e 12 colunas, que comprimidas dao 70 KB — cabe no
+O plugin usa 4.719 linhas e 12 colunas, que comprimidas dao 174 KB — cabe no
 repositorio do plugin sem incomodar ninguem.
 
 Esta e a UNICA ponte entre os dois projetos. O plugin nao importa codigo do
@@ -16,6 +16,7 @@ Esta e a UNICA ponte entre os dois projetos. O plugin nao importa codigo do
 precisa baixar, descompactar e adicionar.
 """
 
+import io
 import sys
 import csv
 import gzip
@@ -78,9 +79,6 @@ def gerar(origem: Path, destino: Path, manifesto: Path) -> dict:
                                r["nivel_4"], r["titulo"]))
 
     destino.parent.mkdir(parents=True, exist_ok=True)
-    conteudo = []
-    cabecalho = ",".join(COLUNAS)
-    import io
     buf = io.StringIO()
     w = csv.DictWriter(buf, fieldnames=COLUNAS, extrasaction="ignore",
                        lineterminator="\n")

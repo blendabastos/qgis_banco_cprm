@@ -12,19 +12,22 @@ indexado pela Carta Internacional ao Milionesimo, cuja malha e uma formula.
 "SC.24" e a faixa 8S-12S no fuso -42..-36, e os sufixos cortam essa folha em
 quadrantes ate a escala de 1:50.000.
 
-Cobertura medida sobre as 4.719 camadas do catalogo: 71,2% trazem o codigo.
+O codigo de folha cobre 71,2% das 4.719 camadas do catalogo. A aerogeofisica
+nao tem folha, tem PROJETO, e para ela a posicao vem de `projetos.py` — as duas
+fontes somadas dao 76,8%:
 
-    KML                        99,7%
-    SIG (Vetores)              85,1%
-    Mapa (PDF)                 76,4%
-    Geoquimica-XLSX            32,7%
-    Geofisica-Geotiff          32,5%
-    XYZ, LiDAR, ortofoto        0,0%   <- indexados por projeto, nao por folha
+    KML                        99,7%   folha
+    Geofisica-Geotiff          90,1%   projeto + folha
+    SIG (Vetores)              85,1%   folha
+    Geofisica-XYZ              87,9%   projeto
+    Mapa (PDF)                 76,4%   folha
+    Geoquimica-XLSX            32,7%   folha
+    LiDAR, ortofoto             0,0%   nao dizem onde ficam
 
-Os 29% sem codigo NAO tem caixa, e isso e dito em voz alta em vez de ser
-resolvido por chute. Uma camada sem localizacao conhecida some do resultado
-quando o filtro espacial esta ligado, e o painel informa quantas sumiram: filtro
-que esconde dado em silencio e o oposto do que o resto do plugin faz.
+O que sobra NAO tem caixa, e isso e dito em voz alta em vez de ser resolvido
+por chute. Uma camada sem localizacao conhecida some do resultado quando o
+filtro espacial esta ligado, e o painel informa quantas sumiram: filtro que
+esconde dado em silencio e o oposto do que o resto do plugin faz.
 
 Nao importa Qt nem qgis.core de proposito — a malha e aritmetica, e assim roda
 em teste puro.
@@ -203,10 +206,8 @@ def caixa_da_camada(camada):
     if guardada is not False:
         return guardada
 
-    achada = None
     from . import projetos
     achada = projetos.caixa_da_camada(camada, _tabela_de_projetos())
-
     if achada is None:
         for texto in (camada.titulo,) + tuple(camada.pastas):
             cod = codigo_do_texto(texto)

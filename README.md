@@ -538,6 +538,19 @@ Corrigir a codificação resolveu o arquivo, mas quem lê o manifesto não é o
 nosso código, e não há como verificar daqui como cada QGIS o interpreta. ASCII
 tira a variável do caminho, e um teste recusa qualquer acento que volte.
 
+**Um só jeito de perguntar "já baixei isto?".** A resposta mora em
+`pacote.pasta_tem_conteudo`, e só lá. Havia quatro cópias da mesma linha — na
+ficha do painel, no diálogo de download, na tarefa de baixar e numa função do
+baixador que ninguém chamava. Iguais hoje, sem garantia de continuarem iguais;
+a que esquecesse o prefixo de caminho longo diria "não baixei" para um pacote
+que está em disco, e o usuário rebaixaria 1,6 GB. Um teste lê o código.
+
+**Sem CRS, o filtro recusa em vez de supor.** Se o projeto está com um sistema
+de coordenadas inválido, não dá para saber a unidade da extensão do mapa.
+Seguir em frente seria supor grau — e num projeto em metros isso devolveria uma
+lista errada, calada. O painel diz que não conseguiu ler a extensão e mostra
+tudo.
+
 **Um só jeito de criar pasta.** Toda escrita passa por `pacote.criar_pasta`,
 que sempre usa o prefixo de caminho longo. Havia um `mkdir` cru ao lado de um
 `open` com prefixo, na mesma função — o arquivo seria gravado e a pasta que o
@@ -672,8 +685,8 @@ $q = "C:\Program Files\QGIS 4.0.1\bin\python-qgis.bat"
 & $q testes\test_carga.py               # o plugin com interface de verdade
 ```
 
-São **267 testes** — 76 de lógica, 48 do leitor de XYZ, 24 da malha do IBGE,
-19 dos municípios, 10 dos projetos, 20 da banda alfa e 70 com interface de
+São **276 testes** — 78 de lógica, 48 do leitor de XYZ, 27 da malha do IBGE,
+19 dos municípios, 10 dos projetos, 20 da banda alfa e 74 com interface de
 verdade —, rodando dentro do QGIS e não contra dublês: é o único jeito de pegar
 enum renomeado no PyQt6 ou sinal que não existe mais.
 

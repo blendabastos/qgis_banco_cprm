@@ -23,7 +23,6 @@ from . import pacote
 from .catalogo import limpar_nome, bytes_legivel as legivel
 from .config import EXTENSOES_ARQUIVO_MORTO
 
-BLOCO = 1 << 20
 MIN_BYTES = 64          # abaixo disso e pagina de erro, nao arquivo
 ETIQUETA = "Acervo CPRM"
 
@@ -73,11 +72,7 @@ def caminhos_do_pacote(camada, pasta_destino):
 def pacote_em_disco(camada, pasta_destino) -> bool:
     """True se o pacote ja foi baixado e extraido."""
     _, pasta = caminhos_do_pacote(camada, pasta_destino)
-    try:
-        p = Path(pacote.caminho_longo(pasta))
-        return p.is_dir() and any(p.iterdir())
-    except OSError:
-        return False
+    return pacote.pasta_tem_conteudo(pasta)
 
 
 class TarefaBaixar(QgsTask):
@@ -189,8 +184,7 @@ class TarefaBaixar(QgsTask):
         return zipfile.is_zipfile(pacote.caminho_longo(self.arquivo))
 
     def _ja_extraido(self) -> bool:
-        p = Path(pacote.caminho_longo(self.pasta_extraida))
-        return p.is_dir() and any(p.iterdir())
+        return pacote.pasta_tem_conteudo(self.pasta_extraida)
 
     def _arquivo_utilizavel(self) -> bool:
         """Um download completo de uma tentativa anterior evita rebaixar."""

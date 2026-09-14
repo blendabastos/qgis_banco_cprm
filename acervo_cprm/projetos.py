@@ -3,7 +3,7 @@
 projetos.py — Onde ficam os projetos aerogeofisicos, pelo geoportal do SGB.
 
 O filtro espacial deduz a posicao do codigo de folha do IBGE (ver folhas.py), e
-isso cobre 71% do acervo — mas zero por cento dos projetos aerogeofisicos. Eles
+isso cobre 71,2% do acervo — mas cobria ZERO por cento da aerogeofisica. Ela
 sao indexados por PROJETO, nao por folha: os titulos sao "1009-XYZ",
 "3065-Geotif", um numero e nao uma carta.
 

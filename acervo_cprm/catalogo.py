@@ -74,7 +74,7 @@ class Camada:
             self.tamanho_bytes = 0
         self.link = (linha.get("link_download") or "").strip()
         self.origem = (linha.get("origem") or "").strip()
-        # Indice de busca pre-calculado: filtrar 1.824 camadas a cada tecla
+        # Indice de busca pre-calculado: filtrar 4.719 camadas a cada tecla
         # digitada nao pode custar normalizacao de acento toda vez.
         self._busca = sem_acento(" ".join(
             (self.titulo, self.nome_arquivo) + self.pastas))

@@ -45,12 +45,8 @@ class DialogoDownload(QDialog):
         self._montar()
 
     def _esta_em_disco(self) -> bool:
-        try:
-            from . import pacote
-            p = Path(pacote.caminho_longo(self.pasta_extraida))
-            return p.is_dir() and any(p.iterdir())
-        except Exception:
-            return False
+        from . import pacote
+        return pacote.pasta_tem_conteudo(self.pasta_extraida)
 
     def _contar_abriveis(self) -> int:
         """

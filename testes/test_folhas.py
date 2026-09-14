@@ -241,7 +241,7 @@ class TesteContraOCatalogoReal(unittest.TestCase):
 
     def test_cobertura_nao_regride(self):
         """
-        76,7% das camadas tem posicao: 71,2% pelo codigo de folha, mais a
+        76,8% das camadas tem posicao: 71,2% pelo codigo de folha, mais a
         aerogeofisica que veio da camada indice. O numero pode SUBIR (o SGB
         publica mais), mas se cair e porque uma das duas fontes quebrou — e a
         falha seria silenciosa, um filtro que esconde demais.

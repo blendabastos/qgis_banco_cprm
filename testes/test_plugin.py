@@ -890,6 +890,41 @@ class TesteCaminhoLongo(unittest.TestCase):
         self.assertEqual(culpados, [],
                          "criacao de pasta sem o prefixo de caminho longo")
 
+    def test_so_ha_um_jeito_de_perguntar_se_ja_baixou(self):
+        """
+        "Ja esta em disco?" mora em `pacote.pasta_tem_conteudo`, e so la.
+
+        Le o CODIGO, como o teste do prefixo acima, e pela mesma razao: as
+        copias eram identicas HOJE, e nada garantia que continuariam iguais.
+        A que esquecesse o prefixo de caminho longo responderia "nao baixei"
+        para um pacote que esta em disco — e o usuario rebaixaria 1,6 GB.
+
+        Havia quatro: na ficha do painel, no dialogo de download, na tarefa de
+        baixar e numa funcao do baixador que ninguem chamava.
+        """
+        raiz = Path(__file__).resolve().parent.parent / "acervo_cprm"
+        culpados = []
+        for arquivo in sorted(raiz.glob("*.py")):
+            if arquivo.name == "pacote.py":
+                continue                    # e a casa da funcao
+            for n, linha in enumerate(
+                    arquivo.read_text(encoding="utf-8").splitlines(), 1):
+                if "is_dir()" in linha and "iterdir()" in linha:
+                    culpados.append("%s:%d %s" % (arquivo.name, n,
+                                                  linha.strip()))
+        self.assertEqual(culpados, [],
+                         "copia de `pasta_tem_conteudo` fora do pacote.py")
+
+    def test_pasta_tem_conteudo(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            vazia = Path(tmp) / "vazia"
+            vazia.mkdir()
+            self.assertFalse(pacote.pasta_tem_conteudo(vazia))
+            (vazia / "x.txt").write_text("oi", encoding="utf-8")
+            self.assertTrue(pacote.pasta_tem_conteudo(vazia))
+            self.assertFalse(pacote.pasta_tem_conteudo(Path(tmp) / "nao_existe"))
+
     def test_sem_prefixo_e_idempotente(self):
         p = Path("C:/dados/x.shp")
         self.assertEqual(pacote.sem_prefixo(p), p)

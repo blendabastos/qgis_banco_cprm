@@ -1341,6 +1341,86 @@ class TesteIrParaCidade(unittest.TestCase):
         return achadas
 
 
+class TesteCrsInvalido(unittest.TestCase):
+    """
+    Sem saber o CRS do projeto, o plugin RECUSA em vez de supor grau.
+
+    Achado numa revisao, nao no uso: com o CRS do canvas invalido, o filtro
+    seguia em frente e tratava a extensao como se fosse grau. Num projeto em
+    metros isso devolveria uma lista errada, calada — e "coordenada errada e
+    pior que conversao recusada" e a regra do resto do plugin.
+    """
+
+    def setUp(self):
+        from qgis.PyQt.QtWidgets import QMainWindow
+        from acervo_cprm.painel import PainelAcervo
+        self.janela = QMainWindow()
+        self.iface = IfaceFalso(self.janela)
+        self.painel = PainelAcervo(self.iface, self.janela)
+
+    def tearDown(self):
+        self.painel.deleteLater()
+        self.janela.deleteLater()
+
+    def _invalidar_crs(self):
+        from qgis.core import QgsCoordinateReferenceSystem, QgsRectangle
+        canvas = self.iface.mapCanvas()
+        canvas.setDestinationCrs(QgsCoordinateReferenceSystem())
+        canvas.setExtent(QgsRectangle(-48, -16, -42, -12))
+
+    def test_nao_le_extensao_sem_crs(self):
+        self._invalidar_crs()
+        self.assertIsNone(self.painel._extensao_do_mapa())
+
+    def test_o_painel_avisa_em_vez_de_filtrar_errado(self):
+        self._invalidar_crs()
+        self.painel.so_na_tela.setChecked(True)
+        self.painel.aplicar_filtro()
+        self.assertIn("não consegui ler a extensão", self.painel.resumo.text())
+        # e nao esconde nada: sem extensao confiavel, mostra tudo
+        self.assertIn("%d de %d" % (len(self.painel.camadas),
+                                    len(self.painel.camadas)),
+                      self.painel.resumo.text())
+
+    def test_nao_move_o_mapa_sem_crs(self):
+        self._invalidar_crs()
+        antes = self.iface.mapCanvas().extent().toString()
+        self.painel._ir_para_cidade("Parauapebas — PA")
+        self.assertEqual(self.iface.mapCanvas().extent().toString(), antes)
+
+
+class TesteDescarregarComFiltroLigado(unittest.TestCase):
+    """
+    O plugin sai de cena com o sinal do canvas conectado.
+
+    Mesma familia do bug da QgsTask ja destruida: um sinal que aponta para
+    objeto morto levanta "wrapped C/C++ object has been deleted" na proxima
+    vez que o mapa se move. O PyQt desconecta sozinho slots que sao metodo
+    ligado de QObject, e este teste trava esse comportamento — se um dia o
+    slot virar lambda, ele acusa.
+    """
+
+    def test_mapa_pode_mover_depois_do_unload(self):
+        from qgis.PyQt.QtWidgets import QMainWindow
+        from qgis.PyQt.QtCore import QCoreApplication
+        from qgis.core import QgsRectangle
+        import acervo_cprm
+
+        janela = QMainWindow()
+        iface = IfaceFalso(janela)
+        plugin = acervo_cprm.classFactory(iface)
+        plugin.initGui()
+        plugin.alternar_painel(True)
+        iface.docks[0].so_na_tela.setChecked(True)
+
+        plugin.unload()
+        QCoreApplication.processEvents()
+
+        iface.mapCanvas().setExtent(QgsRectangle(-50, -20, -40, -10))
+        iface.mapCanvas().extentsChanged.emit()      # nao pode levantar
+        QCoreApplication.processEvents()
+
+
 if __name__ == "__main__":
     from qgis.core import QgsApplication
     app = QgsApplication([], True)          # True: precisa de GUI

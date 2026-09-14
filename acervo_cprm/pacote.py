@@ -129,6 +129,24 @@ def _seguro(destino: Path, relativo: str) -> Path:
     return alvo
 
 
+def pasta_tem_conteudo(pasta) -> bool:
+    """
+    A pasta existe e tem alguma coisa dentro?
+
+    E como o plugin responde "ja baixei isto?". Fonte unica: havia QUATRO
+    copias desta mesma linha — na ficha do painel, no dialogo de download, na
+    tarefa de baixar e numa funcao do baixador que ninguem chamava. Todas
+    iguais hoje, e nenhuma garantia de que continuariam iguais amanha; a que
+    esquecesse o prefixo de caminho longo responderia "nao baixei" para um
+    pacote que esta em disco, e o usuario rebaixaria 1,6 GB.
+    """
+    try:
+        p = Path(caminho_longo(pasta))
+        return p.is_dir() and any(p.iterdir())
+    except OSError:
+        return False
+
+
 def criar_pasta(caminho: Path):
     """
     mkdir -p, SEMPRE com o prefixo de caminho longo.
@@ -725,7 +743,7 @@ def adicionar_ao_projeto(itens, nome_grupo: str, em_pontos: bool = False,
     for item in ordenados:
         if (em_pontos and item.especie == "tabela" and item.coordenadas):
             try:
-                caminho, gravadas, _ = criar_pontos(item, crs_authid)
+                caminho, _gravadas, _puladas = criar_pontos(item, crs_authid)
                 from qgis.core import QgsVectorLayer
                 camada = QgsVectorLayer(str(caminho), item.nome, "ogr")
             except Exception:

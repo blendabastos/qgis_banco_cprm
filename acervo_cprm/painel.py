@@ -298,9 +298,14 @@ class PainelAcervo(QDockWidget):
         except (AttributeError, RuntimeError):
             return False
 
+        if not destino.isValid():
+            # Mesma razao de `_extensao_do_mapa`: sem saber o CRS do projeto,
+            # mandar graus para um mapa em metros levaria o usuario para perto
+            # da origem do plano, longe da cidade que ele pediu.
+            return False
         retangulo = QgsRectangle(caixa[0], caixa[1], caixa[2], caixa[3])
         origem = QgsCoordinateReferenceSystem("EPSG:4326")
-        if destino.isValid() and destino != origem:
+        if destino != origem:
             try:
                 tr = QgsCoordinateTransform(origem, destino,
                                             QgsProject.instance())
@@ -366,7 +371,13 @@ class PainelAcervo(QDockWidget):
             return None
 
         destino = QgsCoordinateReferenceSystem("EPSG:4326")
-        if origem.isValid() and origem != destino:
+        if not origem.isValid():
+            # CRS invalido: nao da para saber a unidade da extensao. Seguir em
+            # frente seria supor grau, e num projeto em metros isso devolveria
+            # uma lista errada calada — a mesma regra do resto do plugin:
+            # melhor recusar do que entregar resultado que parece bom.
+            return None
+        if origem != destino:
             try:
                 tr = QgsCoordinateTransform(origem, destino,
                                             QgsProject.instance())
@@ -426,11 +437,7 @@ class PainelAcervo(QDockWidget):
 
     @staticmethod
     def _ja_baixado(pasta_extraida: Path) -> bool:
-        try:
-            p = Path(pacote.caminho_longo(pasta_extraida))
-            return p.is_dir() and any(p.iterdir())
-        except OSError:
-            return False
+        return pacote.pasta_tem_conteudo(pasta_extraida)
 
     def _limpar_tarefas(self):
         """
