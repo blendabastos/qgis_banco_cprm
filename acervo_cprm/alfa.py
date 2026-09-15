@@ -230,7 +230,7 @@ def aplicar_na_pasta(raiz, progresso=None, cancelado=None) -> int:
         except Exception as erro:                    # noqa: BLE001
             QgsMessageLog.logMessage(
                 f"alfa: {p.name} ficou sem transparencia ({erro})",
-                ETIQUETA, Qgis.Warning)
+                ETIQUETA, Qgis.MessageLevel.Warning)
         if progresso is not None:
             progresso(i + 1, len(alvos))
     return mexidos

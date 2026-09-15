@@ -53,46 +53,6 @@ RE_META = re.compile(r"^\s*//\s*(\w+)\s+(.*)$")
 #: Nulo do Geosoft. Aparece 244.506 vezes so no Gama.XYZ do projeto 3065.
 NULO = "*"
 
-
-def partir(texto, separador=None):
-    """
-    Quebra uma linha de dados em campos.
-
-    `separador` None e o XYZ classico, alinhado por espaco. A partir dos
-    levantamentos da serie 3000 o SGB passou a exportar do Geosoft em CSV
-    ("/ CSV EXPORT", virgula, sem alinhamento), e ai `separador` e ",".
-
-    No modo virgula o campo vazio vira NULO: ",," no meio da linha e ausencia
-    de medida, e mante-lo como "" faria a coluna inteira parecer texto.
-    """
-    if separador is None:
-        return texto.split()
-    return [p.strip() or NULO for p in texto.split(separador)]
-
-
-def separador_provavel(linhas_de_dados):
-    """
-    Espaco ou virgula, decidido pelo que sobra DENTRO de cada campo.
-
-    Contar colunas nao resolve. Numa linha com virgula decimal separada por
-    espaco — "787207,5  8540867,2  -48,350480" — a virgula produz MAIS campos
-    que o espaco, e a contagem sozinha escolheria errado, cortando cada numero
-    ao meio.
-
-    O que separa os dois casos e o espaco residual: no CSV do Geosoft nenhum
-    campo tem espaco interno, enquanto na virgula decimal o corte deixa
-    "5  8540867" grudado. Entao a virgula so vale quando ela limpa a linha
-    inteira.
-    """
-    if not linhas_de_dados:
-        return None
-    n_bons = 0
-    for s in linhas_de_dados:
-        campos = partir(s, ",")
-        if len(campos) > 1 and not any(re.search(r"\s", c) for c in campos):
-            n_bons += 1
-    return "," if n_bons > len(linhas_de_dados) / 2 else None
-
 #: Grau-minuto-segundo separado por ponto: -15.27.08.20 == -15o 27' 08,20".
 #: Tem que casar a string inteira, senao "-15.27" (grau decimal legitimo)
 #: entraria aqui e viraria -15o 27' 0".
@@ -142,6 +102,48 @@ NOMES_LON = ("LONGITUDE", "LONGITUD", "LONG", "LON", "X_GEO", "LONGDD")
 NOMES_LAT = ("LATITUDE", "LATITUD", "LAT", "Y_GEO", "LATDD")
 NOMES_ESTE = ("UTME", "X", "XUTM", "UTM_E", "EASTING", "EAST", "LESTE", "ESTE")
 NOMES_NORTE = ("UTMN", "Y", "YUTM", "UTM_N", "NORTHING", "NORTH", "NORTE")
+
+
+# ─── Separador de campos ─────────────────────────────────────────────────────
+
+def partir(texto, separador=None):
+    """
+    Quebra uma linha de dados em campos.
+
+    `separador` None e o XYZ classico, alinhado por espaco. A partir dos
+    levantamentos da serie 3000 o SGB passou a exportar do Geosoft em CSV
+    ("/ CSV EXPORT", virgula, sem alinhamento), e ai `separador` e ",".
+
+    No modo virgula o campo vazio vira NULO: ",," no meio da linha e ausencia
+    de medida, e mante-lo como "" faria a coluna inteira parecer texto.
+    """
+    if separador is None:
+        return texto.split()
+    return [p.strip() or NULO for p in texto.split(separador)]
+
+
+def separador_provavel(linhas_de_dados):
+    """
+    Espaco ou virgula, decidido pelo que sobra DENTRO de cada campo.
+
+    Contar colunas nao resolve. Numa linha com virgula decimal separada por
+    espaco — "787207,5  8540867,2  -48,350480" — a virgula produz MAIS campos
+    que o espaco, e a contagem sozinha escolheria errado, cortando cada numero
+    ao meio.
+
+    O que separa os dois casos e o espaco residual: no CSV do Geosoft nenhum
+    campo tem espaco interno, enquanto na virgula decimal o corte deixa
+    "5  8540867" grudado. Entao a virgula so vale quando ela limpa a linha
+    inteira.
+    """
+    if not linhas_de_dados:
+        return None
+    n_bons = 0
+    for s in linhas_de_dados:
+        campos = partir(s, ",")
+        if len(campos) > 1 and not any(re.search(r"\s", c) for c in campos):
+            n_bons += 1
+    return "," if n_bons > len(linhas_de_dados) / 2 else None
 
 
 # ─── Faixas de valor, para reconhecer coordenada sem nome ────────────────────
@@ -278,8 +280,8 @@ def nomes_do_cabecalho(linhas_cru, separador=None):
     nomes e os dados.
     """
     ultima = None
-    for l in linhas_cru:
-        s = l.rstrip()
+    for bruta in linhas_cru:
+        s = bruta.rstrip()
         if not s.strip():
             continue
         if s.startswith("//"):
@@ -329,7 +331,7 @@ class Amostra:
         self.separador = None
 
     def coluna(self, i):
-        return [l[i] for l in self.linhas if i < len(l)]
+        return [linha[i] for linha in self.linhas if i < len(linha)]
 
     def faixa(self, i):
         """(min, max) dos valores numericos da coluna, ou (None, None)."""
@@ -350,8 +352,8 @@ def amostrar(linhas_cru, limite=4000):
     a = Amostra()
     contagens = {}
     cruas = []
-    for l in linhas_cru:
-        s = l.strip()
+    for bruta in linhas_cru:
+        s = bruta.strip()
         if not s:
             continue
         if s.startswith("/"):
@@ -376,7 +378,8 @@ def amostrar(linhas_cru, limite=4000):
         # A contagem dominante: um arquivo truncado pode ter uma ultima linha
         # pela metade, e ela nao pode definir o esquema.
         a.n_colunas = max(contagens.items(), key=lambda kv: kv[1])[0]
-        a.linhas = [l for l in a.linhas if len(l) == a.n_colunas]
+        a.linhas = [linha for linha in a.linhas
+                    if len(linha) == a.n_colunas]
     return a
 
 
@@ -791,24 +794,26 @@ def verificar(esq, extensao):
 
     lons = [p[0] for p in lonlat]
     lats = [p[1] for p in lonlat]
-    o, l = min(lons), max(lons)
-    s, n = min(lats), max(lats)
+    oeste, leste = min(lons), max(lons)
+    sul, norte = min(lats), max(lats)
 
-    if not (BRASIL[0] <= o and l <= BRASIL[2]
-            and BRASIL[1] <= s and n <= BRASIL[3]):
+    if not (BRASIL[0] <= oeste and leste <= BRASIL[2]
+            and BRASIL[1] <= sul and norte <= BRASIL[3]):
         problemas.append(
             "A extensao convertida (%.2f,%.2f .. %.2f,%.2f) cai fora do "
-            "Brasil. O CRS escolhido provavelmente esta errado." % (o, s, l, n))
+            "Brasil. O CRS escolhido provavelmente esta errado."
+            % (oeste, sul, leste, norte))
 
     caixa = esq.caixa_esperada
     if caixa and not problemas:
         folga = 1.5       # grau; os leiames arredondam os limites
-        if (l < caixa[0] - folga or o > caixa[2] + folga
-                or n < caixa[1] - folga or s > caixa[3] + folga):
+        if (leste < caixa[0] - folga or oeste > caixa[2] + folga
+                or norte < caixa[1] - folga or sul > caixa[3] + folga):
             problemas.append(
                 "A extensao convertida (%.2f,%.2f .. %.2f,%.2f) nao encosta na "
                 "area que o leiame declara (%.2f,%.2f .. %.2f,%.2f)."
-                % (o, s, l, n, caixa[0], caixa[1], caixa[2], caixa[3]))
+                % (oeste, sul, leste, norte,
+                   caixa[0], caixa[1], caixa[2], caixa[3]))
     return problemas
 
 
@@ -1180,7 +1185,6 @@ def saidas_existentes(origem):
     (460 MB) E o .gpkg (2,61 GB) — 5,3 GB, com os dois ultimos sendo o mesmo
     dado e aparecendo os dois como camada na hora de adicionar ao projeto.
     """
-    from pathlib import Path
     achados = []
     for formato in FORMATOS_SAIDA:
         p = caminho_de_saida(origem, formato)

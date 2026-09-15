@@ -28,9 +28,6 @@ from . import xyz
 from .catalogo import bytes_legivel as _legivel
 
 
-
-
-
 def _tempo_legivel(segundos):
     if segundos < 90:
         return "%d s" % max(1, int(segundos))

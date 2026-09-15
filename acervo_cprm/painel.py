@@ -189,7 +189,7 @@ class PainelAcervo(QDockWidget):
             self.camadas = cat.carregar(origem)
         except Exception as e:
             self.camadas = []
-            self._aviso(f"Não foi possível ler o catálogo: {e}", Qgis.Critical)
+            self._aviso(f"Não foi possível ler o catálogo: {e}", Qgis.MessageLevel.Critical)
             return
         self.aplicar_filtro()
 
@@ -269,10 +269,10 @@ class PainelAcervo(QDockWidget):
         """
         m = municipios.por_rotulo(self.municipios, rotulo)
         if m is None:
-            self._aviso("Não encontrei esse município.", Qgis.Warning)
+            self._aviso("Não encontrei esse município.", Qgis.MessageLevel.Warning)
             return
         if not self._enquadrar(municipios.com_folga(m.caixa)):
-            self._aviso("Não consegui mover o mapa.", Qgis.Warning)
+            self._aviso("Não consegui mover o mapa.", Qgis.MessageLevel.Warning)
             return
         self.cidade.setText(m.rotulo)
         if not self.so_na_tela.isChecked():
@@ -497,7 +497,7 @@ class PainelAcervo(QDockWidget):
         try:
             pacote.criar_pasta(destino)
         except OSError as e:
-            self._aviso(f"Não consigo escrever em {destino}: {e}", Qgis.Critical)
+            self._aviso(f"Não consigo escrever em {destino}: {e}", Qgis.MessageLevel.Critical)
             return
 
         tarefa = TarefaBaixar(camada, destino, forcar=forcar)
@@ -519,7 +519,7 @@ class PainelAcervo(QDockWidget):
         self._limpar_tarefas()
         self._selecao_mudou()          # a ficha agora diz "ja baixado"
         if not adicionar_depois:
-            self._aviso(f"Pacote salvo em {pasta}", Qgis.Success)
+            self._aviso(f"Pacote salvo em {pasta}", Qgis.MessageLevel.Success)
             return
         if self._oferecer_conversao_xyz(pasta, camada):
             return          # a conversao continua a partir de _apos_converter
@@ -540,7 +540,7 @@ class PainelAcervo(QDockWidget):
         try:
             esquemas = xyz.analisar_pacote(Path(pasta))
         except Exception as e:                       # noqa: BLE001
-            registrar(f"Não consegui analisar os XYZ: {e}", Qgis.Warning)
+            registrar(f"Não consegui analisar os XYZ: {e}", Qgis.MessageLevel.Warning)
             return False
         if not esquemas:
             return False
@@ -594,7 +594,7 @@ class PainelAcervo(QDockWidget):
         barra.layout().addWidget(cancelar)
         # Nivel Info e duracao 0: so sai quando nos tirarmos. Uma barra que
         # some sozinha no meio da conversao seria pior que nenhuma.
-        self.iface.messageBar().pushWidget(barra, Qgis.Info)
+        self.iface.messageBar().pushWidget(barra, Qgis.MessageLevel.Info)
         self._barra_progresso = barra
 
         def andou(texto, _n):
@@ -631,7 +631,7 @@ class PainelAcervo(QDockWidget):
             self._aviso("Conversão cancelada")
             return
         if erro:
-            self._aviso(f"Conversão falhou: {erro}", Qgis.Critical)
+            self._aviso(f"Conversão falhou: {erro}", Qgis.MessageLevel.Critical)
             return
         total = sum(n for _, n, _ in resultados)
         problemas = [p for _, _, ps in resultados for p in ps]
@@ -647,9 +647,9 @@ class PainelAcervo(QDockWidget):
         if problemas:
             partes.append(f"{len(problemas)} com aviso")
         self._aviso(" · ".join(partes),
-                    Qgis.Warning if problemas else Qgis.Success)
+                    Qgis.MessageLevel.Warning if problemas else Qgis.MessageLevel.Success)
         for p in problemas:
-            registrar(p, Qgis.Warning)
+            registrar(p, Qgis.MessageLevel.Warning)
         self._escolher_camadas(pasta, camada)
 
     def _escolher_camadas(self, pasta: str, camada):
@@ -658,14 +658,14 @@ class PainelAcervo(QDockWidget):
             itens = pacote.inspecionar(Path(pasta))
         except Exception as e:
             self._aviso(f"Baixou, mas não consegui ler o pacote: {e}",
-                        Qgis.Warning)
+                        Qgis.MessageLevel.Warning)
             return
         if not itens:
             # Nao abrimos o Explorer sozinho: janela do sistema pulando na
             # frente do QGIS parece erro, e esconde o que de fato aconteceu.
             # A mensagem diz onde esta, e o dialogo tem o botao para ir la.
             self._aviso(f"Nenhum arquivo que o QGIS abra neste pacote. "
-                        f"Conteúdo em {pasta}", Qgis.Warning)
+                        f"Conteúdo em {pasta}", Qgis.MessageLevel.Warning)
             return
 
         dialogo = DialogoCamadas(itens, camada.titulo, Path(pasta), self)
@@ -682,7 +682,7 @@ class PainelAcervo(QDockWidget):
             msg += f" (tabelas espacializadas em {dialogo.crs_escolhido})"
         if falhas:
             msg += f", {len(falhas)} não abriram"
-        self._aviso(msg, Qgis.Success if adicionadas else Qgis.Warning)
+        self._aviso(msg, Qgis.MessageLevel.Success if adicionadas else Qgis.MessageLevel.Warning)
 
     def _apos_falhar(self, mensagem: str, camada):
         self._fechar_barra()
@@ -690,7 +690,7 @@ class PainelAcervo(QDockWidget):
         if mensagem == "cancelado":
             self._aviso("Download cancelado")
             return
-        self._aviso(f"{camada.titulo[:50]}: {mensagem}", Qgis.Critical)
+        self._aviso(f"{camada.titulo[:50]}: {mensagem}", Qgis.MessageLevel.Critical)
 
     def _abrir_pasta(self, caminho):
         from qgis.PyQt.QtCore import QUrl
@@ -725,7 +725,7 @@ class PainelAcervo(QDockWidget):
         if resposta.error() != QNetworkReply.NetworkError.NoError:
             self._aviso(f"Não consegui baixar o catálogo: "
                         f"{resposta.errorString()}. Seguindo com o embutido.",
-                        Qgis.Warning)
+                        Qgis.MessageLevel.Warning)
             return
         try:
             enxuto = cat.filtrar_sig_do_catalogo_completo(bytes(resposta.readAll()))
@@ -733,11 +733,11 @@ class PainelAcervo(QDockWidget):
             alvo.write_bytes(enxuto)
         except Exception as e:
             self._aviso(f"O catálogo baixado não serviu ({e}). "
-                        f"Seguindo com o embutido.", Qgis.Warning)
+                        f"Seguindo com o embutido.", Qgis.MessageLevel.Warning)
             return
         self.carregar_catalogo()
         self._aviso(f"Catálogo atualizado: {len(self.camadas)} camadas",
-                    Qgis.Success)
+                    Qgis.MessageLevel.Success)
 
     def _menu_contexto(self, ponto):
         camada = self._camada_selecionada()
@@ -753,7 +753,7 @@ class PainelAcervo(QDockWidget):
 
     # ─── mensagens ───────────────────────────────────────────────────────────
 
-    def _aviso(self, texto: str, nivel=Qgis.Info):
+    def _aviso(self, texto: str, nivel=Qgis.MessageLevel.Info):
         self.iface.messageBar().pushMessage("Acervo CPRM", texto, level=nivel,
                                             duration=6)
         registrar(texto, nivel)

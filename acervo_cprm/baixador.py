@@ -27,7 +27,7 @@ MIN_BYTES = 64          # abaixo disso e pagina de erro, nao arquivo
 ETIQUETA = "Acervo CPRM"
 
 
-def registrar(msg: str, nivel=Qgis.Info):
+def registrar(msg: str, nivel=Qgis.MessageLevel.Info):
     QgsMessageLog.logMessage(msg, ETIQUETA, nivel)
 
 
@@ -95,7 +95,7 @@ class TarefaBaixar(QgsTask):
     andamento = pyqtSignal(str, int)
 
     def __init__(self, camada, pasta_destino: Path, forcar: bool = False):
-        super().__init__(f"Baixando {camada.titulo[:50]}", QgsTask.CanCancel)
+        super().__init__(f"Baixando {camada.titulo[:50]}", QgsTask.Flag.CanCancel)
         self.camada = camada
         self.forcar = forcar        # ignora o que ja esta em disco
         self.arquivo, self.pasta_extraida = caminhos_do_pacote(
@@ -152,7 +152,7 @@ class TarefaBaixar(QgsTask):
 
         except Exception as e:                     # noqa: BLE001 - vai para a UI
             self.mensagem = str(e)
-            registrar(f"[{self.camada.id}] {e}", Qgis.Critical)
+            registrar(f"[{self.camada.id}] {e}", Qgis.MessageLevel.Critical)
             return False
 
     def _limpar_pasta(self):
@@ -231,7 +231,7 @@ class TarefaBaixar(QgsTask):
                 progresso=self._progresso_alfa,
                 cancelado=self.isCanceled)
         except Exception as e:                       # noqa: BLE001
-            registrar(f"[{self.camada.id}] moldura branca: {e}", Qgis.Warning)
+            registrar(f"[{self.camada.id}] moldura branca: {e}", Qgis.MessageLevel.Warning)
             return
         if mexidos:
             registrar(f"[{self.camada.id}] banda alfa em {mexidos} GeoTIFF")

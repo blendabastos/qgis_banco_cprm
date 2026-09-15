@@ -23,7 +23,7 @@ from .pacote import caminho_para_abrir
 ETIQUETA = "Acervo CPRM"
 
 
-def registrar(msg, nivel=Qgis.Info):
+def registrar(msg, nivel=Qgis.MessageLevel.Info):
     QgsMessageLog.logMessage(msg, ETIQUETA, nivel)
 
 
@@ -47,7 +47,7 @@ class TarefaConverterXyz(QgsTask):
     andamento = pyqtSignal(str, int)
 
     def __init__(self, trabalhos, formato="Parquet", apagar_origem=False):
-        super().__init__("Convertendo XYZ aerogeofísico", QgsTask.CanCancel)
+        super().__init__("Convertendo XYZ aerogeofísico", QgsTask.Flag.CanCancel)
         self.trabalhos = list(trabalhos)
         self.formato = formato
         self.apagar_origem = apagar_origem
@@ -76,7 +76,7 @@ class TarefaConverterXyz(QgsTask):
             return True
         except Exception as e:                      # noqa: BLE001
             self.erro = "%s: %s" % (type(e).__name__, e)
-            registrar(self.erro, Qgis.Critical)
+            registrar(self.erro, Qgis.MessageLevel.Critical)
             return False
 
     def _converter_um(self, esq, destino, feito, total):
@@ -116,7 +116,7 @@ class TarefaConverterXyz(QgsTask):
                 registrar("removida saída anterior: %s" % velho.name)
             except OSError as e:
                 registrar("não consegui remover %s: %s" % (velho.name, e),
-                          Qgis.Warning)
+                          Qgis.MessageLevel.Warning)
 
         r = xyz.converter(
             abrir, esq, caminho_para_abrir(destino), formato=self.formato,
@@ -132,7 +132,7 @@ class TarefaConverterXyz(QgsTask):
 
         registrar("%s -> %s: %d pontos" % (origem.name, destino.name, r["n"]))
         for p in r["problemas"]:
-            registrar("%s: %s" % (origem.name, p), Qgis.Warning)
+            registrar("%s: %s" % (origem.name, p), Qgis.MessageLevel.Warning)
 
         if self.apagar_origem and not r["problemas"] and r["n"] > 0:
             # So depois de uma conversao limpa. Apagar o original quando a
@@ -144,7 +144,7 @@ class TarefaConverterXyz(QgsTask):
                 registrar("apagado o XYZ original: %s" % origem.name)
             except OSError as e:
                 registrar("não consegui apagar %s: %s" % (origem.name, e),
-                          Qgis.Warning)
+                          Qgis.MessageLevel.Warning)
 
         return (destino, r["n"], r["problemas"])
 
