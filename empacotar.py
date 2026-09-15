@@ -25,6 +25,10 @@ DIST = AQUI / "dist"
 IGNORAR_PASTAS = {"__pycache__", ".git", ".pytest_cache"}
 IGNORAR_SUFIXOS = {".pyc", ".pyo", ".orig", ".rej"}
 
+#: Manifesto que `gerar_catalogo.py` escreve para conferencia no repositorio.
+#: O plugin nunca le, e ele traz o caminho da maquina que gerou o catalogo.
+IGNORAR_NOMES = {"catalogo_sig.json"}
+
 
 def versao() -> str:
     texto = (PLUGIN / "metadata.txt").read_text(encoding="utf-8")
@@ -38,7 +42,7 @@ def arquivos():
             continue
         if any(parte in IGNORAR_PASTAS for parte in p.parts):
             continue
-        if p.suffix.lower() in IGNORAR_SUFIXOS:
+        if p.suffix.lower() in IGNORAR_SUFIXOS or p.name in IGNORAR_NOMES:
             continue
         yield p
 

@@ -173,15 +173,11 @@ def _settings():
 
 def destino_padrao() -> Path:
     """Documentos/Acervo CPRM, seguindo a pasta de documentos do sistema."""
-    try:
-        from qgis.PyQt.QtCore import QStandardPaths
-        docs = QStandardPaths.writableLocation(
-            QStandardPaths.StandardLocation.DocumentsLocation)
-        if docs:
-            return Path(docs) / "Acervo CPRM"
-    except Exception:
-        pass
-    return Path.home() / "Documents" / "Acervo CPRM"
+    from qgis.PyQt.QtCore import QStandardPaths
+    docs = QStandardPaths.writableLocation(
+        QStandardPaths.StandardLocation.DocumentsLocation)
+    # Vazio em perfil sem pasta de documentos configurada; ai o palpite serve.
+    return Path(docs or Path.home() / "Documents") / "Acervo CPRM"
 
 
 def ler(chave: str):

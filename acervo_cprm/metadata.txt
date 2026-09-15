@@ -5,7 +5,12 @@ description=Catalogo do acervo GEOSGB do Servico Geologico do Brasil (SGB/CPRM) 
 about=Acesso a 4.719 camadas e 643 GB de dados, com busca por folha, projeto ou palavra-chave, downloads em segundo plano e selecao por pacote.
     Suporta diversos formatos, incluindo SHP, KML, KMZ, GeoPackage, GeoJSON, GeoTIFF, LAS/LAZ, XLSX, CSV e a carta geologica em PDF.
     Tambem permite converter XYZ do Geosoft em pontos e espacializar planilhas de geoquimica. O catalogo e embutido e atualizavel pelo repositorio, sem dependencias externas.
-version=1.0.0
+
+    Catalog of the GEOSGB collection of the Geological Survey of Brazil (SGB/CPRM) inside QGIS: search, download and add data to your project.
+    Access to 4,719 layers and 643 GB of data, with search by map sheet, project or keyword, background downloads and per-package selection.
+    Supports many formats, including SHP, KML, KMZ, GeoPackage, GeoJSON, GeoTIFF, LAS/LAZ, XLSX, CSV and the geological map as PDF.
+    It also converts Geosoft XYZ files into point layers and turns geochemistry spreadsheets into layers. The catalog is bundled and updatable from the repository, with no external dependencies.
+version=1.0.1
 author=Blenda Bastos
 email=blenda.bastos@hotmail.com
 

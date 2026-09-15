@@ -35,7 +35,11 @@ a georreferencia e a projecao tambem.
 import os
 from pathlib import Path
 
+from qgis.core import QgsMessageLog, Qgis
+
 from .pacote import caminho_para_abrir, caminho_longo, sem_prefixo
+
+ETIQUETA = "Acervo CPRM"
 
 #: Cor do fundo nos mapas do SGB. A compressao original e PACKBITS, sem perdas,
 #: entao o valor chega exato — nao ha artefato para tolerar.
@@ -210,7 +214,9 @@ def aplicar_na_pasta(raiz, progresso=None, cancelado=None) -> int:
     Aplica a todo GeoTIFF da pasta que precisar. Devolve quantos mudaram.
 
     Nunca levanta por causa de um arquivo: um TIFF estranho no meio do pacote
-    nao pode impedir os outros dezesseis de ficarem utilizaveis.
+    nao pode impedir os outros dezesseis de ficarem utilizaveis. A falha vai
+    para o log do QGIS em vez de sumir: o arquivo segue sem alfa e quem abrir
+    o mapa vai querer saber por que.
     """
     alvos = [p for p in sorted(Path(caminho_longo(sem_prefixo(raiz))).rglob("*"))
              if p.suffix.lower() in (".tif", ".tiff")]
@@ -221,8 +227,10 @@ def aplicar_na_pasta(raiz, progresso=None, cancelado=None) -> int:
         try:
             if aplicar(sem_prefixo(p)):
                 mexidos += 1
-        except Exception:                            # noqa: BLE001
-            pass
+        except Exception as erro:                    # noqa: BLE001
+            QgsMessageLog.logMessage(
+                f"alfa: {p.name} ficou sem transparencia ({erro})",
+                ETIQUETA, Qgis.Warning)
         if progresso is not None:
             progresso(i + 1, len(alvos))
     return mexidos

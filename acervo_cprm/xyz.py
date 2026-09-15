@@ -53,6 +53,46 @@ RE_META = re.compile(r"^\s*//\s*(\w+)\s+(.*)$")
 #: Nulo do Geosoft. Aparece 244.506 vezes so no Gama.XYZ do projeto 3065.
 NULO = "*"
 
+
+def partir(texto, separador=None):
+    """
+    Quebra uma linha de dados em campos.
+
+    `separador` None e o XYZ classico, alinhado por espaco. A partir dos
+    levantamentos da serie 3000 o SGB passou a exportar do Geosoft em CSV
+    ("/ CSV EXPORT", virgula, sem alinhamento), e ai `separador` e ",".
+
+    No modo virgula o campo vazio vira NULO: ",," no meio da linha e ausencia
+    de medida, e mante-lo como "" faria a coluna inteira parecer texto.
+    """
+    if separador is None:
+        return texto.split()
+    return [p.strip() or NULO for p in texto.split(separador)]
+
+
+def separador_provavel(linhas_de_dados):
+    """
+    Espaco ou virgula, decidido pelo que sobra DENTRO de cada campo.
+
+    Contar colunas nao resolve. Numa linha com virgula decimal separada por
+    espaco — "787207,5  8540867,2  -48,350480" — a virgula produz MAIS campos
+    que o espaco, e a contagem sozinha escolheria errado, cortando cada numero
+    ao meio.
+
+    O que separa os dois casos e o espaco residual: no CSV do Geosoft nenhum
+    campo tem espaco interno, enquanto na virgula decimal o corte deixa
+    "5  8540867" grudado. Entao a virgula so vale quando ela limpa a linha
+    inteira.
+    """
+    if not linhas_de_dados:
+        return None
+    n_bons = 0
+    for s in linhas_de_dados:
+        campos = partir(s, ",")
+        if len(campos) > 1 and not any(re.search(r"\s", c) for c in campos):
+            n_bons += 1
+    return "," if n_bons > len(linhas_de_dados) / 2 else None
+
 #: Grau-minuto-segundo separado por ponto: -15.27.08.20 == -15o 27' 08,20".
 #: Tem que casar a string inteira, senao "-15.27" (grau decimal legitimo)
 #: entraria aqui e viraria -15o 27' 0".
@@ -194,6 +234,7 @@ class Esquema:
 
     def __init__(self):
         self.n_colunas = 0
+        self.separador = None     # None = alinhado por espaco; "," = CSV
         self.nomes = []           # nome de cada coluna, ou "c00", "c01"...
         self.tipos = []           # "real" ou "texto"
         self.ix = None            # indice da coluna de X / longitude
@@ -223,7 +264,7 @@ class Esquema:
 
 # ─── Cabecalho ───────────────────────────────────────────────────────────────
 
-def nomes_do_cabecalho(linhas_cru):
+def nomes_do_cabecalho(linhas_cru, separador=None):
     """
     Os nomes das colunas, se o arquivo os traz.
 
@@ -246,7 +287,7 @@ def nomes_do_cabecalho(linhas_cru):
         if s.startswith("/"):
             corpo = s.lstrip("/ ").rstrip()
             if corpo and not re.fullmatch(r"[=\-\s.]+", corpo):
-                ultima = corpo.split()
+                ultima = partir(corpo, separador)
             continue
         if RE_ROTULO.match(s):
             continue
@@ -285,6 +326,7 @@ class Amostra:
         self.linhas = []
         self.comentarios = []
         self.n_colunas = 0
+        self.separador = None
 
     def coluna(self, i):
         return [l[i] for l in self.linhas if i < len(l)]
@@ -307,6 +349,7 @@ def amostrar(linhas_cru, limite=4000):
     """Le ate `limite` linhas de dados, guardando tambem os comentarios."""
     a = Amostra()
     contagens = {}
+    cruas = []
     for l in linhas_cru:
         s = l.strip()
         if not s:
@@ -316,11 +359,19 @@ def amostrar(linhas_cru, limite=4000):
             continue
         if RE_ROTULO.match(s):
             continue
-        partes = s.split()
+        cruas.append(s)
+        if len(cruas) >= limite:
+            break
+
+    # O separador sai das primeiras linhas de dados de verdade, nao do
+    # cabecalho: comentario do Geosoft tem virgula em data e em nome de campo
+    # independentemente de como os dados estao escritos.
+    a.separador = separador_provavel(cruas[:200])
+
+    for s in cruas:
+        partes = partir(s, a.separador)
         a.linhas.append(partes)
         contagens[len(partes)] = contagens.get(len(partes), 0) + 1
-        if len(a.linhas) >= limite:
-            break
     if contagens:
         # A contagem dominante: um arquivo truncado pode ter uma ultima linha
         # pela metade, e ela nao pode definir o esquema.
@@ -413,7 +464,10 @@ def analisar(linhas_cru, nome_arquivo="", texto_auxiliar=""):
     esq = Esquema()
     amostra = amostrar(linhas_cru)
     esq.n_colunas = amostra.n_colunas
+    esq.separador = amostra.separador
     esq.n_amostra = len(amostra.linhas)
+    if esq.separador == ",":
+        esq.anotar("Campos separados por virgula (exportacao CSV do Geosoft).")
     if not esq.n_colunas:
         esq.avisos.append("Nenhuma linha de dados reconhecida no arquivo.")
         return esq
@@ -455,7 +509,8 @@ def _extensao_da_amostra(esq, amostra):
 
 
 def _nomear_colunas(esq, amostra, nome_arquivo):
-    nomes = nomes_do_cabecalho(amostra.comentarios + ["0 " * amostra.n_colunas])
+    nomes = nomes_do_cabecalho(amostra.comentarios + ["0 " * amostra.n_colunas],
+                               amostra.separador)
     if nomes and len(nomes) == amostra.n_colunas:
         esq.anotar("Nomes das colunas: linha de cabecalho do proprio arquivo.")
     else:
@@ -890,7 +945,7 @@ def converter(abrir_texto, esq, destino, formato="Parquet",
                 linha_atual = (m.group(2) or "").strip()
                 continue
 
-            partes = s.split()
+            partes = partir(s, esq.separador)
             if len(partes) != esq.n_colunas:
                 continue          # linha truncada; nao inventamos valor
             x = ler_coord(partes[esq.ix])

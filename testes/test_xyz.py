@@ -88,6 +88,36 @@ Line  10030
 """
 
 
+#: Projeto 3084, Area 16 - Padre Paraiso. A partir da serie 3000 o SGB passou a
+#: exportar do Geosoft em CSV: virgula, sem alinhamento, e os nomes das colunas
+#: numa unica linha "/X,Y,...". Separado por espaco, o arquivo inteiro vira UMA
+#: coluna — sem coordenada, e a conversao recusava.
+CSV_SERIE_3000 = """\
+/ ------------------------------------------------------------------------
+/ CSV EXPORT [07/25/2024]
+/ DATABASE   [.\\GDB\\3024_Mag.gdb]
+/ ------------------------------------------------------------------------
+/
+/X,Y,FIDUCIAL,MAGCOR,LONGITUDE,LATITUDE,DATA
+//Flight 4
+//Date 2011/03/13
+Line  10010
+233495.69,7930666.84,1896.0,23711.887,-41.52682809,-18.69809464,2011/02/16
+233497.93,7930661.25,1896.1,23711.876,-41.52680759,-18.69814537,2011/02/16
+Tie  19010
+233500.17,7930655.67,1896.2,,-41.52678710,-18.69819611,2011/02/16
+"""
+
+#: Virgula decimal com campos separados por espaco. Nao e CSV: aqui a virgula
+#: nao pode ganhar, senao a linha se quebra no meio de cada numero.
+VIRGULA_DECIMAL = """\
+/  UTME      UTMN    LONGITUDE    LATITUDE
+LINE    50.
+  787207,5  8540867,2  -48,350480  -13,185057
+  787208,1  8540901,7  -48,350474  -13,184749
+"""
+
+
 def linhas(texto):
     return texto.splitlines(True)
 
@@ -157,6 +187,46 @@ class TesteCabecalho(unittest.TestCase):
 
     def test_sem_cabecalho_devolve_none(self):
         self.assertIsNone(xyz.nomes_do_cabecalho(linhas(SAMMP)))
+
+
+class TesteSeparador(unittest.TestCase):
+    """
+    A serie 3000 e exportada em CSV. Antes disso o plugin quebrava as linhas
+    so por espaco, entao o arquivo inteiro virava uma coluna: baixava, e a
+    conversao recusava dizendo que nao achava a coordenada.
+    """
+
+    def test_csv_da_serie_3000(self):
+        esq = xyz.analisar(linhas(CSV_SERIE_3000), nome_arquivo="3084-Mag.XYZ")
+        self.assertEqual(esq.separador, ",")
+        self.assertEqual(esq.n_colunas, 7)
+        self.assertTrue(esq.tem_coordenada)
+        self.assertEqual(esq.crs, "EPSG:4326")
+        self.assertEqual([esq.nomes[esq.ix], esq.nomes[esq.iy]],
+                         ["longitude", "latitude"])
+
+    def test_espaco_continua_sendo_o_padrao(self):
+        for texto in (MODERNO, ANTIGO, SAMMP, GMS):
+            self.assertIsNone(xyz.analisar(linhas(texto)).separador)
+
+    def test_virgula_decimal_nao_e_csv(self):
+        """
+        "787207,5  8540867,2" da 5 campos por virgula e 4 por espaco. Decidir
+        pela contagem escolheria a virgula e cortaria cada numero ao meio; o
+        que desempata e o espaco que sobra dentro de "5  8540867".
+        """
+        esq = xyz.analisar(linhas(VIRGULA_DECIMAL))
+        self.assertIsNone(esq.separador)
+        self.assertEqual(esq.n_colunas, 4)
+
+    def test_nomes_das_colunas_saem_da_linha_com_virgula(self):
+        nomes = xyz.nomes_do_cabecalho(linhas(CSV_SERIE_3000), ",")
+        self.assertEqual(nomes, ["X", "Y", "FIDUCIAL", "MAGCOR",
+                                 "LONGITUDE", "LATITUDE", "DATA"])
+
+    def test_campo_vazio_do_csv_vira_nulo(self):
+        """",," no meio da linha e ausencia de medida, nao texto vazio."""
+        self.assertEqual(xyz.partir("1,,3", ","), ["1", xyz.NULO, "3"])
 
 
 class TesteCoordenada(unittest.TestCase):
